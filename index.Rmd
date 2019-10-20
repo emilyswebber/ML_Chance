@@ -8,8 +8,8 @@ output: html_document
 directory <- "/Users/emily.webber/Dropbox/Website Dropbox 2/ML_Chance"
 setwd(directory)
 
-
-
+options(scipen=100)
+#options(digits=4)
 library(dplyr)
 library(stringr)
 library(data.table)
@@ -17,6 +17,8 @@ library(caret)
 library(e1071)
 library(MLmetrics)
 library(boot)
+library(scales)
+library(knitr)
 ```
 
 &nbsp; 
@@ -230,13 +232,13 @@ I decided can borrow a concept from non-parametric statistics and use a wilcoxon
 ```{r comment=FALSE}
 wilcoxon_data = data.frame(Random= Boat_random$diff_abs, Training=boat_training_exp$diff_abs) 
 
-res <-wilcox.test(wilcoxon_data$Training, wilcoxon_data$Random, conf.level = 0.95)
+res <-wilcox.test(wilcoxon_data$Training, wilcoxon_data$Random)
 res
 ```
 
 &nbsp; 
 
-The results show that the p-value is very small, meaning that we can with reasonable credibility assert that the reduction in error that we see with our XBGTree model predicting on real vs. random data is likely not due to chance.
+The results show that the p-value is very small (`r res$p.value`), meaning that we can with reasonable credibility assert that the reduction in error that we see with our XBGTree model predicting on real vs. random data is likely not due to chance.
 
 &nbsp; 
 
@@ -310,9 +312,113 @@ rci$normal
 
 &nbsp; 
 
+### Does this difference in these metrics decrease with smaller samples sizes?
+
+I want to see if these metrics degrade with smaller sample sizes.  If so, then this logic may really be a good measure of whether or not your modeling results are due to chance.  With smaller datasets one should be less confident.
+
+
+&nbsp; 
+
+### P-value
+
+You can see below that the p-value for the smaller dataset is larger than for all of the data, suggesting that this logic scales.
+
+```{r comment=FALSE}
+# get 95% confidence interval 
+
+wilcoxon_data_10per = sample_n(wilcoxon_data, 89)
+
+res_2 <-wilcox.test(wilcoxon_data_10per$Training, wilcoxon_data_10per$Random)
+res_2
+
+```
+
+Whole datset p-value is: `r res$p.value` 
+
+&nbsp; 
+
+10% datset p-value is: `r res_2$p.value` 
+
+&nbsp; 
+
+### Bootstrapping 
+
+I applied the same bootstrapping principles to the small dataset as well. 
+
+```{r comment=FALSE}
+small_data <- boat_training_exp
+colnames(small_data)[colnames(small_data)=="diff_abs"] <- "train_diff"
+small_data$random_diff <- Boat_random$diff_abs
+
+small_data <- sample_n(small_data, 89)
+
+# bootstrapping with 1000 replications 
+results_training_small <- boot(data=small_data$train_diff, statistic=med.diff2, R=1000)
+
+results_random_small <- boot(data=small_data$random_diff, statistic=med.diff2, R=1000)
+```
+
+&nbsp; 
+
+### Non-random Training data: 10%
+
+The confidence interals for the small vs. whole dataset are wider for the non-randomized sample. 
+
+```{r fig.width= 12,  fig.height = 5, echo = FALSE, warning = FALSE, fig.show='hold', fig.align='center', comment=FALSE}
+plot(results_training_small)
+```
+
+&nbsp; 
+
+### Confidence intervals for training data: 10% 
+```{r comment=FALSE}
+# get 95% confidence interval 
+tci2 <-boot.ci(results_training_small, type=c("norm"))
+tci2$normal
+```
+
+&nbsp; 
+
+Whole datset confidence interval is: `r percent(tci$normal)` 
+
+&nbsp; 
+
+10% datset confidence interval is: `r percent(tci2$normal)` 
+
+&nbsp; 
+
+### Randomized data: 10%
+
+The confidence interals for the small vs. whole dataset are wider for the random sample as well.
+
+```{r fig.width= 12,  fig.height = 5, echo = FALSE, warning = FALSE, fig.show='hold', fig.align='center', comment=FALSE}
+plot(results_random_small)
+```
+
+&nbsp; 
+
+### Confidence intervals for random dataset: 10%
+```{r comment=FALSE}
+# get 95% confidence interval 
+rci2 <-boot.ci(results_random_small, type=c("norm"))
+rci2$normal
+```
+
+&nbsp;
+
+Whole datset confidence interval is: `r percent(rci$normal)` 
+
+&nbsp;
+
+10% datset confidence interval is: `r percent(rci2$normal)` 
+
+&nbsp; 
+
 ### Discussion
 
-I set out to try and apply some of the validation metrics used in statistics to machine learning.  The idea is certainly not totally there, but I think this process is a good start to marrying two fundamental concepts between statistics and machine learning.
+I set out to try and apply some of the validation metrics used in statistics to machine learning.  The idea is certainly not totally there, but I think this process is a good start to marrying two fundamental concepts between statistics and machine learning.  
+
+The p-values and confidence intervals scale down in a way that makes sense with a smaller dataset. 
 
 Some other ideas: 
 
