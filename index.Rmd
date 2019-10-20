@@ -1,0 +1,247 @@
+---
+title: "Random Chance"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+
+directory <- "/Users/emily.webber/Dropbox/Website Dropbox 2/LogGain"
+setwd(directory)
+
+
+
+library(dplyr)
+library(stringr)
+library(data.table)
+
+
+```
+
+
+### How do you know your ML results aren't due to chance?
+
+In hypothesis testing, scientists use p-values to make sure their observations are not due to chance.  Can we do something similar in ML?  
+
+
+I used the titanic dataset on kaggle to explore this idea. 
+
+
+### The first step is to get the training set and get it ready for modeling.
+```{r }
+
+#Get Train Set Ready *******
+Boat <- read.csv("train.csv")
+
+#Title and Last Name
+Boat$title<- word(Boat$Name,1, sep = fixed('.'))
+Boat$title<- word(Boat$title,-1)
+Boat$lastName <- word(Boat$Name, 1)
+
+##Embarked
+Boat$Embarked[Boat$Embarked == ""] <- "C"
+
+##Remove
+Boat$Ticket <- NULL
+Boat$lastName <- NULL
+TrainID <- Boat$PassengerId
+Boat$PassengerId <- NULL
+Boat$Name <- NULL
+
+##Factors
+Boat$Sex <- as.numeric(Boat$Sex)
+Boat$Pclass <- as.factor(as.numeric(Boat$Pclass))
+
+##Age
+Boat$Age[is.na(Boat$Age)] <- median(Boat$Age, na.rm = TRUE)
+Boat$Fare[is.na(Boat$Fare)] <- median(Boat$Fare, na.rm = TRUE)
+
+##Title
+Boat$title2[Boat$title == "Lady" |
+              Boat$title == "Countess" |
+              Boat$title == "Don" |
+              Boat$title == "Dr" |
+              Boat$title == "Rev" |
+              Boat$title == "Sir" |
+              Boat$title == "Johnkheer"] <- "Rare"
+            
+Boat$title2[Boat$title == "Major" |
+               Boat$title == "Countess" |
+               Boat$title == "Capt"] <- "Officer"
+
+
+Boat$title2[is.na(Boat$title2)] <- "Common"
+Boat$title2 <- NULL            
+Boat$Cabin <- NULL      
+#write.csv(Boat, file = "trainboat_fin.csv")
+
+```
+
+
+### The second step is to do the same for the testing dataset.
+```{r }
+boattest <- read.csv("test.csv")
+
+##Title and Last Name
+boattest$title<- word(boattest$Name,1, sep = fixed('.'))
+boattest$title<- word(boattest$title,-1)
+boattest$lastName <- word(boattest$Name, 1)
+
+##Embarked
+boattest$Embarked[is.na(boattest$Embarked)] <- "C"
+
+##Remove
+boattest$Ticket <- NULL
+boattest$lastName <- NULL
+TestID <- boattest$PassengerId
+boattest$PassengerId <- NULL
+boattest$Name <- NULL
+
+##Factor
+boattest$title <- as.factor(boattest$title)
+boattest$Sex <- as.numeric(boattest$Sex)
+boattest$Pclass <- as.factor(as.numeric(boattest$Pclass))
+
+
+##Age
+boattest$Age[is.na(boattest$Age)] <- median(boattest$Age, na.rm = TRUE)
+boattest$Fare[is.na(boattest$Fare)] <- median(boattest$Fare, na.rm = TRUE)
+
+##Title
+boattest$title2[boattest$title == "Lady" |
+                   boattest$title == "Countess" |
+                   boattest$title == "Don" |
+                   boattest$title == "Dr" |
+                   boattest$title == "Rev" |
+                   boattest$title == "Sir" |
+                   boattest$title == "Johnkheer"] <- "Rare"
+
+boattest$title2[boattest$title == "Major" |
+               boattest$title == "Countess" |
+               boattest$title == "Capt"] <- "Officer"
+
+
+boattest$title2[is.na(boattest$title2)] <- "Common"
+
+
+boattest <- as.data.frame((boattest))
+
+boattest$title <- as.character(boattest$title)
+boattest$title[boattest$title == "Dona"] <- 'Don'
+boattest$title <- as.factor(boattest$title)
+boattest$title2 <- NULL
+boattest$Cabin <- NULL
+
+#write.csv(boattest, file = "boattest_fin.csv")
+
+```
+
+
+### I ran an xbgTree algorithm on the training data.
+
+```{r }
+#Rmodel*****************
+library(caret)
+library(e1071)
+library(MLmetrics)
+set.seed(1)
+
+xbg <- train(factor(Survived) ~.,
+             method = 'xgbTree',
+             data = Boat); print(xbg)
+
+
+confusionMatrix(xbg)
+```
+
+
+### This is where it get's interesting...
+
+So I have a basic model that I ran on a famous dataset, now what?  
+
+If you want to compare your training results to chance, then one way to do it is to randomized your dataset and rerun it through the algorithm. 
+```{r }
+
+##Perturb Data *****
+Boat_random <- Boat
+Boat_Label <- Boat$Survived
+Boat_random$Survived <- NULL
+Boat_random = as.data.frame(lapply(Boat_random, function(x) { sample(x) }))
+```
+
+
+### The next step is to take the random data that I created and use my model to make predictions.  
+```{r }
+
+random_pred <-predict(xbg, Boat_random, type="prob")
+
+```
+
+### After that, I wanted to see how well the model predicted when there was no pattern in the data in comparison to the actual values. 
+
+
+The model shouldn't predict well because there are no real relationships in the data. However, it should get some right just by chance.  The way I did this was I subtracted the predicted probability by the actual value (0 or 1) and then took the average of the absolute difference)
+
+```{r }
+Boat_random$Actual <- Boat_Label
+Boat_random$Random_Pred <- random_pred[,2]
+
+Boat_random$Actual <- Boat_Label
+Boat_random$Survived[Boat_random$Actual == 1] <- "Yes"
+Boat_random$Survived[Boat_random$Actual == 0] <- "No"
+
+Boat_random$diff <- Boat_random$Actual - Boat_random$Random_Pred
+Boat_random$diff_abs <- abs(Boat_random$diff)
+mean(Boat_random$diff_abs)
+```
+
+### Even with random data the model is, on average, wrong 48% of the time and correct 52% of the time.
+
+
+```{r fig.width= 12,  fig.height = 5, echo = FALSE, warning = FALSE, fig.show='hold', fig.align='center', comment=FALSE}
+
+ggplot(aes(x=diff_abs, fill = Survived), data=Boat_random, stat_bin(25)) + 
+  geom_histogram(bins = 25) +   
+  scale_fill_manual(values = c("dark gray","dark blue")) +
+  ggtitle("Diff for Random Data")  + 
+   ylab("Count") + 
+   xlab('Absolute Difference') + theme(legend.position="top")
+```
+
+**You can see above that the algorithm did not predict well for either class when the data was randomized.**
+
+
+### Finally, I wanted to see what the this metric would look like for the real trainig data. 
+
+##With meaningful data the modeling was incorrect only 20% of the time, which is a big improvement than the prior difference score.
+
+```{r }
+#Predict on training data for comparison**********
+boat_training_exp <- Boat
+survived <- boat_training_exp$Survived 
+boat_training_exp$Survived <- NULL
+
+real_pred <-predict(xbg, boat_training_exp,type="prob")
+
+boat_training_exp$prediction <- real_pred[,2]
+boat_training_exp$actual <- survived
+
+boat_training_exp$diff <- boat_training_exp$actual - boat_training_exp$prediction
+
+boat_training_exp$diff_abs <- abs(boat_training_exp$diff)
+mean(boat_training_exp$diff_abs)
+
+boat_training_exp$Survived[boat_training_exp$actual == 1] <- "Yes"
+boat_training_exp$Survived[boat_training_exp$actual == 0] <- "No"
+```
+
+```{r fig.width= 12,  fig.height = 5, echo = FALSE, warning = FALSE, fig.show='hold', fig.align='center', comment=FALSE}
+
+ggplot(aes(x=diff_abs, fill = Survived), data=boat_training_exp, stat_bin(25)) + 
+  geom_histogram(bins = 25) +   
+  scale_fill_manual(values = c("dark gray","dark blue")) +
+  ggtitle("Diff for Random Data")  + 
+   ylab("Count") + 
+   xlab('Absolute Difference') + theme(legend.position="top")
+```
+
+**
