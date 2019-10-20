@@ -339,11 +339,11 @@ res_2
 
 ```
 
-Whole datset p-value is: `r format(round(res$p.value, 20), nsmall = 20)` 
+Whole dataset p-value is: `r format(round(res$p.value, 20), nsmall = 20)` 
 
 &nbsp; 
 
-10% datset p-value is: `r res_2$p.value` 
+10% dataset p-value is: `r res_2$p.value` 
 
 &nbsp; 
 
@@ -385,11 +385,11 @@ tci2$normal
 
 &nbsp; 
 
-Whole datset confidence interval is: `r percent(tci$normal)` 
+Whole dataset confidence interval is: `r percent(tci$normal)` 
 
 &nbsp; 
 
-10% datset confidence interval is: `r percent(tci2$normal)` 
+10% dataset confidence interval is: `r percent(tci2$normal)` 
 
 &nbsp; 
 
@@ -412,11 +412,11 @@ rci2$normal
 
 &nbsp;
 
-Whole datset confidence interval is: `r percent(rci$normal)` 
+Whole dataset confidence interval is: `r percent(rci$normal)` 
 
 &nbsp;
 
-10% datset confidence interval is: `r percent(rci2$normal)` 
+10% dataset confidence interval is: `r percent(rci2$normal)` 
 
 &nbsp; 
 
@@ -444,22 +444,22 @@ The confidence intervals in the non-random data (`r percent(tci$normal)`) are lo
 
 **P-values**
 
-Whole sedate p-value is: `r format(round(res$p.value, 20), nsmall = 20)` 
+Whole dataset p-value is: `r format(round(res$p.value, 20), nsmall = 20)` 
 
 &nbsp; 
 
-10% sedate p-value is: `r res_2$p.value` 
+10% dataset p-value is: `r res_2$p.value` 
 
 
 &nbsp; 
 
 **Confidence Intervals: non-random**
 
-Whole sedate confidence interval for the non-random data is: `r percent(tci$normal)` 
+Whole dataset confidence interval for the non-random data is: `r percent(tci$normal)` 
 
 &nbsp; 
 
-10% sedate confidence interval for the non-random data is is: `r percent(tci2$normal)` 
+10% dataset confidence interval for the non-random data is is: `r percent(tci2$normal)` 
 
 &nbsp; 
 
