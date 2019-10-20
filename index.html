@@ -564,7 +564,7 @@ FALSE
 FALSE data:  wilcoxon_data_10per$Training and wilcoxon_data_10per$Random
 FALSE W = 2200, p-value = 0.0000003052
 FALSE alternative hypothesis: true location shift is not equal to 0</code></pre>
-<p>Whole datset p-value is: 0</p>
+<p>Whole datset p-value is: 0.00000000000000000000</p>
 <p> </p>
 <p>10% datset p-value is: 0.0000003</p>
 <p> </p>
@@ -633,27 +633,27 @@ FALSE [1,] 0.95 0.2518102 0.5783673</code></pre>
 <p>The median errors for the non-random data: 11.3%</p>
 <ol start="4" style="list-style-type: decimal">
 <li><p>Then I plotted the distributions of these errors for the random and non-random samples.</p></li>
-<li><p>I then wanted to see if the differences were <em>due to chance</em>, so I rand those error’s through a Wilcoxon sign ranked test - which is a way to compare to non-normal distributions. This test determined that these error distributions are significantly different: p-value: 0.00000000000000000000.</p></li>
+<li><p>In order to see if the differences were <em>due to chance</em> I ran the median error for each sample through a Wilcoxon sign ranked test - which is a way to compare non-normal distributions. This test determined that these error distributions are significantly different from one another: p-value: 0.00000000000000000000.</p></li>
 <li><p>After finding the p-vlaue I used a non-parametric bootstrapping method to calculate confidence intervals.</p></li>
 </ol>
 <p>The confidence intervals in the non-random data (95.0%, 10.3%, 12.1%) are lower than the random data (95.0%, 41.6%, 51.8%), further supporting that these two distributon of errors do not have much overlap.</p>
 <ol start="7" style="list-style-type: decimal">
-<li>The final thing I wanted to test was whether or not this method would be impacted by sample size. Confidence in findings should theoretically decrease when I use smaller samples, so I took a random sample of 10% of the original dat and recalculated these metrics.</li>
+<li>The final thing I wanted to test was whether or not this method would be impacted by sample size. Confidence in findings should theoretically decrease when I use smaller samples, so I took a random sample of 10% of the original data and recalculated these metrics.</li>
 </ol>
 <p><strong>P-values</strong></p>
-<p>Whole datset p-value is: 0.00000000000000000000</p>
+<p>Whole sedate p-value is: 0.00000000000000000000</p>
 <p> </p>
-<p>10% datset p-value is: 0.0000003</p>
+<p>10% sedate p-value is: 0.0000003</p>
 <p> </p>
 <p><strong>Confidence Intervals: non-random</strong></p>
-<p>Whole datset confidence interval for the non-random data is: 95.0%, 10.3%, 12.1%</p>
+<p>Whole sedate confidence interval for the non-random data is: 95.0%, 10.3%, 12.1%</p>
 <p> </p>
-<p>10% datset confidence interval for the non-random data is is: 95.0%, 6.6%, 14.0%</p>
+<p>10% sedate confidence interval for the non-random data is is: 95.0%, 6.6%, 14.0%</p>
 <p> </p>
 <p><strong>Confidence Intervals: random</strong></p>
-<p>Whole datset confidence interval for the random dataset is: 95.0%, 41.6%, 51.8%</p>
+<p>Whole dataset confidence interval for the random dataset is: 95.0%, 41.6%, 51.8%</p>
 <p> </p>
-<p>10% datset confidence interval for the random dataset is: 95.0%, 25.2%, 57.8%</p>
+<p>10% dataset confidence interval for the random dataset is: 95.0%, 25.2%, 57.8%</p>
 <p> </p>
 </div>
 <div id="discussion" class="section level3">
@@ -665,7 +665,7 @@ FALSE [1,] 0.95 0.2518102 0.5783673</code></pre>
 <li><p>Instead of using an absolute error, this could be refined by doing the same process with a metric like LogLoss - which <a href="https://emilyswebber.github.io/LogLoss/">has some interesting properties on it’s own</a>.</p></li>
 <li><p>Using non-parametric comparisons make sense if you don’t know the distribution of the data, but what if you do?</p></li>
 <li><p>Maybe running one random permutation isn’t enough, are there concepts that can be borrowed from Montecarlo simulations? Or is this just extra work without any benefit?</p></li>
-<li><p>I ran a random sample as well as the training sample through the dataset, but I did not use the test sample (mostly because the results are not publically available).</p></li>
+<li><p>I ran a random sample as well as the training sample through the dataset, but I did not use the test sample (mostly because the results are not available).</p></li>
 </ol>
 
 

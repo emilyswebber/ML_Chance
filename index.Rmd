@@ -339,7 +339,7 @@ res_2
 
 ```
 
-Whole datset p-value is: `r res$p.value` 
+Whole datset p-value is: `r format(round(res$p.value, 20), nsmall = 20)` 
 
 &nbsp; 
 
@@ -434,42 +434,42 @@ The median errors for the non-random data: `r percent(median(boat_training_exp$d
 
 4. Then I plotted the distributions of these errors for the random and non-random samples.
 
-5.  I then wanted to see if the differences were *due to chance*, so I rand those error's through a Wilcoxon sign ranked test - which is a way to compare to non-normal distributions.  This test determined that these error distributions are significantly different: p-value: `r format(round(res$p.value, 20), nsmall = 20)`.
+5.  In order to see if the differences were *due to chance* I ran the median error for each sample through a Wilcoxon sign ranked test - which is a way to compare non-normal distributions.  This test determined that these error distributions are significantly different from one another: p-value: `r format(round(res$p.value, 20), nsmall = 20)`.
 
 6. After finding the p-vlaue I used a non-parametric bootstrapping method to calculate confidence intervals.
 
 The confidence intervals in the non-random data (`r percent(tci$normal)`) are lower than the random data (`r percent(rci$normal)`), further supporting that these two distributon of errors do not have much overlap.
 
-7. The final thing I wanted to test was whether or not this method would be impacted by sample size.  Confidence in findings should theoretically decrease when I use smaller samples, so I took a random sample of 10% of the original dat and recalculated these metrics. 
+7. The final thing I wanted to test was whether or not this method would be impacted by sample size.  Confidence in findings should theoretically decrease when I use smaller samples, so I took a random sample of 10% of the original data and recalculated these metrics. 
 
 **P-values**
 
-Whole datset p-value is: `r format(round(res$p.value, 20), nsmall = 20)` 
+Whole sedate p-value is: `r format(round(res$p.value, 20), nsmall = 20)` 
 
 &nbsp; 
 
-10% datset p-value is: `r res_2$p.value` 
+10% sedate p-value is: `r res_2$p.value` 
 
 
 &nbsp; 
 
 **Confidence Intervals: non-random**
 
-Whole datset confidence interval for the non-random data is: `r percent(tci$normal)` 
+Whole sedate confidence interval for the non-random data is: `r percent(tci$normal)` 
 
 &nbsp; 
 
-10% datset confidence interval for the non-random data is is: `r percent(tci2$normal)` 
+10% sedate confidence interval for the non-random data is is: `r percent(tci2$normal)` 
 
 &nbsp; 
 
 **Confidence Intervals: random**
 
-Whole datset confidence interval for the random dataset is: `r percent(rci$normal)` 
+Whole dataset confidence interval for the random dataset is: `r percent(rci$normal)` 
 
 &nbsp;
 
-10% datset confidence interval for the random dataset is: `r percent(rci2$normal)` 
+10% dataset confidence interval for the random dataset is: `r percent(rci2$normal)` 
 
 &nbsp; 
 
@@ -488,7 +488,7 @@ Some other ideas:
 
 3. Maybe running one random permutation isn't enough, are there concepts that can be borrowed from Montecarlo simulations?  Or is this just extra work without any benefit?
 
-4. I ran a random sample as well as the training sample through the dataset, but I did not use the test sample (mostly because the results are not publically available).  
+4. I ran a random sample as well as the training sample through the dataset, but I did not use the test sample (mostly because the results are not available).  
 
 
 <!--html_preserve-->
