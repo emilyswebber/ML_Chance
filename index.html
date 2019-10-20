@@ -301,8 +301,9 @@ $(document).ready(function () {
 <p> </p>
 <div id="how-do-you-know-your-ml-results-arent-due-to-chance" class="section level3">
 <h3>How do you know your ML results aren’t due to chance?</h3>
-<p> </p>
-<p>In hypothesis testing, scientists use p-values and confidence intervals to make sure their observations are not due to chance. Can we do something similar in ML?</p>
+<p>  In hypothesis testing, scientists use p-values and confidence intervals to make sure their observations are not due to chance. Can we do something similar in ML?</p>
+<p>In machine learning, data scientists generally look at out-of-sample validation to determine the fitness of a model. But can we test specifically if the model is picking up relationships that are really there, or are only there by chance?</p>
+<p>I think this would be valuable in situations where you have very wide datasets with many columns and few samples, or if you are modeling on small datasets generally.</p>
 <p>I used the titanic dataset on kaggle to explore this idea.</p>
 <p> </p>
 </div>
@@ -364,6 +365,9 @@ xbg &lt;- train(factor(Survived) ~.,
              method = &#39;xgbTree&#39;,
              data = Boat); print(xbg)</code></pre>
 <p> </p>
+</div>
+<div id="the-confusion-matrix-shows-the-model-has-an-overall-accuracy-83." class="section level3">
+<h3>The confusion matrix shows the model has an overall accuracy ~ 83%.</h3>
 <pre class="r"><code>confusionMatrix(xbg)</code></pre>
 <pre><code>FALSE Bootstrapped (25 reps) Confusion Matrix 
 FALSE 
@@ -380,7 +384,7 @@ FALSE  Accuracy (average) : 0.828</code></pre>
 <div id="this-is-where-it-gets-interesting" class="section level3">
 <h3>This is where it get’s interesting…</h3>
 <p>So I have a basic model that I ran on a famous dataset, now what?</p>
-<p>I want to be able to examine whether or not the modeling is accurate <em>by chance</em>. On approach that comes to mind is to randomized the dataset and rerun it through the algorithm.</p>
+<p>I want to be able to examine whether or not the modeling is accurate <em>by chance</em>. On approach that comes to mind is to randomize the dataset and rerun it through the algorithm.</p>
 <pre class="r"><code>##Perturb Data *****
 Boat_random &lt;- Boat
 Boat_Label &lt;- Boat$Survived
@@ -388,8 +392,8 @@ Boat_random$Survived &lt;- NULL
 Boat_random = as.data.frame(lapply(Boat_random, function(x) { sample(x) }))</code></pre>
 <p> </p>
 </div>
-<div id="the-next-step-is-to-take-the-random-data-use-the-original-model-to-make-predictions." class="section level3">
-<h3>The next step is to take the random data use the original model to make predictions.</h3>
+<div id="run-the-randomized-dataset-through-the-original-model." class="section level3">
+<h3>Run the randomized dataset through the original model.</h3>
 <p>The data in this case is randomized, meaning that the columns do not contain information regarding the target. The model performance should degrade in response this randomization.</p>
 <pre class="r"><code>random_pred &lt;-predict(xbg, Boat_random, type=&quot;prob&quot;)
 random_pred2 &lt;-predict(xbg, Boat_random)</code></pre>
@@ -430,10 +434,10 @@ FALSE        &#39;Positive&#39; Class : 0
 FALSE </code></pre>
 <p> </p>
 </div>
-<div id="after-that-i-wanted-to-see-how-well-the-model-predicted-when-there-was-no-pattern-in-the-data-in-comparison-to-the-actual-values." class="section level3">
-<h3>After that, I wanted to see how well the model predicted when there was no pattern in the data in comparison to the actual values.</h3>
+<div id="next-i-wanted-to-see-the-error-distribution-of-the-random-model." class="section level3">
+<h3>Next I wanted to see the error distribution of the random model.</h3>
 <p> </p>
-<p>The model shouldn’t predict well because there are no real relationships in the data. However, it should get some right just by chance. The way I did this was I subtracted the predicted probability by the actual value (0 or 1) and then took the median of the absolute difference).</p>
+<p>The model shouldn’t predict well because there are no real relationships in the data. However, it should get some right just by chance. I used a simple difference metric to evaluate the fitness of the model. Specifically, I subtracted the predicted probability by the actual value (0 or 1). I then took the median of the absolute difference.</p>
 <pre class="r"><code>Boat_random$Actual &lt;- Boat_Label
 Boat_random$Random_Pred &lt;- random_pred[,2]
 
@@ -446,16 +450,16 @@ median(Boat_random$diff_abs)</code></pre>
 <pre><code>FALSE [1] 0.4612427</code></pre>
 <p> </p>
 </div>
-<div id="with-random-data-the-model-is-as-measured-by-the-median-wrong-46-of-the-time-and-correct-54-of-the-time." class="section level3">
-<h3>With random data the model is, as measured by the median, wrong ~46% of the time and correct ~54% of the time.</h3>
+<div id="with-random-data-the-median-error-of-the-model-is-46." class="section level3">
+<h3>With random data the median error of the model is ~46%.</h3>
 <p> </p>
-<p>You can see above that the algorithm did not predict well for either class when the data was randomized. <img src="index2_files/figure-html/unnamed-chunk-8-1.png" width="1152" style="display: block; margin: auto;" /></p>
+<p>You can see above that the algorithm did not predict well for either class when the data was randomized. <img src="index_files/figure-html/unnamed-chunk-8-1.png" width="1152" style="display: block; margin: auto;" /></p>
 <p> </p>
 </div>
-<div id="i-also-wanted-to-see-what-the-this-metric-would-look-like-for-the-real-training-data." class="section level3">
-<h3>I also wanted to see what the this metric would look like for the real training data.</h3>
+<div id="in-order-compare-apples-to-apples-i-ran-the-training-data-through-the-model-again-as-well." class="section level3">
+<h3>In order compare apples to apples, I ran the training data through the model again as well.</h3>
 <p> </p>
-<p>With meaningful data the modeling was incorrect, as measured by the median, only ~11% of the time. This is a large reduction of error compared to model that predicted on random data.</p>
+<p>With meaningful data the median error of the model is only ~11%. This is a large reduction of error compared to model that predicted on random data. This is a good sign that our model is picking up relevant patterns.</p>
 <pre class="r"><code>#Predict on training data for comparison**********
 boat_training_exp &lt;- Boat
 survived &lt;- boat_training_exp$Survived 
@@ -471,7 +475,7 @@ boat_training_exp$diff &lt;- boat_training_exp$actual - boat_training_exp$predic
 boat_training_exp$diff_abs &lt;- abs(boat_training_exp$diff)
 median(boat_training_exp$diff_abs)</code></pre>
 <p> </p>
-<p><img src="index2_files/figure-html/unnamed-chunk-10-1.png" width="1152" style="display: block; margin: auto;" /></p>
+<p><img src="index_files/figure-html/unnamed-chunk-10-1.png" width="1152" style="display: block; margin: auto;" /></p>
 <p> </p>
 </div>
 <div id="there-is-a-reduction-in-error-of-the-predictions-when-i-add-meaningful-vs.random-data.-but-this-doesnt-address-whether-or-not-this-decrease-is-due-to-chance" class="section level3">
@@ -494,6 +498,7 @@ FALSE alternative hypothesis: true location shift is not equal to 0</code></pre>
 </div>
 <div id="what-about-confidence-intervals" class="section level3">
 <h3>What about confidence intervals?</h3>
+<p> </p>
 <p>P-values are nice, but they are not especially useful on their own. Confidence intervals would be a big boost to my confidence in the differences.</p>
 <p>I used another non-parametric approach to calculate these as well. Specifically, I used a bootstrapping technique and took 1000 random samples from the random and training absolute error and calculated the median for each of those random samples.</p>
 <pre class="r"><code>bootstrap_data = data.frame(Random= Boat_random$diff_abs, Training=boat_training_exp$diff_abs)
@@ -514,7 +519,7 @@ results_random &lt;- boot(data=bootstrap_data$Random, statistic=med.diff2, R=100
 <h3>Results for the Training dataset</h3>
 <p> </p>
 <p>Results for the non-random training dataset showed that 95% of the medians calculated from 1000 bootstrapped error samples are between ~10% and ~12%.</p>
-<p><img src="index2_files/figure-html/unnamed-chunk-13-1.png" width="1152" style="display: block; margin: auto;" /></p>
+<p><img src="index_files/figure-html/unnamed-chunk-13-1.png" width="1152" style="display: block; margin: auto;" /></p>
 <p> </p>
 </div>
 <div id="confidence-intervals-for-training-dataset" class="section level3">
@@ -530,7 +535,7 @@ FALSE [1,] 0.95 0.102959 0.1214663</code></pre>
 <h3>Results for the Random dataset</h3>
 <p> </p>
 <p>Results for the random dataset showed that 95% of the medians calculated from 1000 bootstrapped error samples are between ~42% to ~52%.</p>
-<p><img src="index2_files/figure-html/unnamed-chunk-15-1.png" width="1152" style="display: block; margin: auto;" /></p>
+<p><img src="index_files/figure-html/unnamed-chunk-15-1.png" width="1152" style="display: block; margin: auto;" /></p>
 <p> </p>
 </div>
 <div id="confidence-intervals-for-random-dataset" class="section level3">
@@ -540,14 +545,15 @@ rci &lt;-boot.ci(results_random, type=c(&quot;norm&quot;))
 rci$normal</code></pre>
 <pre><code>FALSE      conf                    
 FALSE [1,] 0.95 0.4157742 0.5181457</code></pre>
+<p> </p>
 </div>
 <div id="discussion" class="section level3">
 <h3>Discussion</h3>
-<p>I set out to try and apply some of the validation metrics used in statistics to machine learning. The idea certainly not totally there, but I think this process is a good start to marrying two fundamental concepts between statistics and machine learning.</p>
+<p>I set out to try and apply some of the validation metrics used in statistics to machine learning. The idea is certainly not totally there, but I think this process is a good start to marrying two fundamental concepts between statistics and machine learning.</p>
 <p>Some other ideas:</p>
 <ol style="list-style-type: decimal">
 <li><p>Instead of using an absolute error, this could be refined by doing the same process with a metric like LogLoss - which <a href="https://emilyswebber.github.io/LogLoss/">has some interesting properties on it’s own</a>.</p></li>
-<li><p>Using non-parametric comparisons make sense if you don’t know the distribution of the data, but what if you do? Is there a pretest that can be applied to determine the distribution of the errors?</p></li>
+<li><p>Using non-parametric comparisons make sense if you don’t know the distribution of the data, but what if you do?</p></li>
 <li><p>Maybe running one random permutation isn’t enough, are there concepts that can be borrowed from Montecarlo simulations? Or is this just extra work without any benefit?</p></li>
 </ol>
 

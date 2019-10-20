@@ -5,7 +5,7 @@ output: html_document
 
 ```{r setup, include=FALSE, results="hide"}
 
-directory <- "/Users/emily.webber/Dropbox/Website Dropbox 2/Chance"
+directory <- "/Users/emily.webber/Dropbox/Website Dropbox 2/ML_Chance"
 setwd(directory)
 
 
@@ -24,8 +24,11 @@ library(boot)
 ### How do you know your ML results aren't due to chance?
 
 &nbsp; 
-
 In hypothesis testing, scientists use p-values and confidence intervals to make sure their observations are not due to chance.  Can we do something similar in ML?  
+
+In machine learning, data scientists generally look at out-of-sample validation to determine the fitness of a model.  But can we test specifically if the model is picking up relationships that are really there, or are only there by chance?
+
+I think this would be valuable in situations where you have very wide datasets with many columns and few samples, or if you are modeling on small datasets generally.     
 
 
 I used the titanic dataset on kaggle to explore this idea. 
@@ -98,6 +101,7 @@ xbg <- train(factor(Survived) ~.,
 
 &nbsp; 
 
+### The confusion matrix shows the model has an overall accuracy ~ 83%.
 ```{r comment=FALSE}
 confusionMatrix(xbg)
 ```
@@ -108,7 +112,7 @@ confusionMatrix(xbg)
 
 So I have a basic model that I ran on a famous dataset, now what?  
 
-I want to be able to examine whether or not the modeling is accurate *by chance*.  On approach that comes to mind is to randomized the dataset and rerun it through the algorithm. 
+I want to be able to examine whether or not the modeling is accurate *by chance*.  On approach that comes to mind is to randomize the dataset and rerun it through the algorithm. 
 ```{r comment=FALSE, results="hide"}
 ##Perturb Data *****
 Boat_random <- Boat
@@ -119,7 +123,7 @@ Boat_random = as.data.frame(lapply(Boat_random, function(x) { sample(x) }))
 
 &nbsp; 
 
-### The next step is to take the random data use the original model to make predictions.  
+### Run the randomized dataset through the original model.  
 
 The data in this case is randomized, meaning that the columns do not contain information regarding the target.  The model performance should degrade in response this randomization.
 ```{r comment=FALSE, results="hide"}
@@ -132,7 +136,6 @@ random_pred2 <-predict(xbg, Boat_random)
 ### Let's take a look at the confusion matrix. 
 
 The confusion matrix shows an accuracy of ~53%
-
 ```{r comment=FALSE}
 random_pred2 <- as.factor(random_pred2)
 Actual <- as.factor(Boat_Label)
@@ -141,11 +144,11 @@ confusionMatrix(Actual, random_pred2)
 
 &nbsp; 
 
-### After that, I wanted to see how well the model predicted when there was no pattern in the data in comparison to the actual values. 
+### Next I wanted to see the error distribution of the random model.
 
 &nbsp; 
 
-The model shouldn't predict well because there are no real relationships in the data. However, it should get some right just by chance.  The way I did this was I subtracted the predicted probability by the actual value (0 or 1) and then took the median of the absolute difference).
+The model shouldn't predict well because there are no real relationships in the data. However, it should get some right just by chance.  I used a simple difference metric to evaluate the fitness of the model.  Specifically, I subtracted the predicted probability by the actual value (0 or 1). I then took the median of the absolute difference.
 
 ```{r comment=FALSE}
 Boat_random$Actual <- Boat_Label
@@ -161,7 +164,7 @@ median(Boat_random$diff_abs)
 
 &nbsp; 
 
-### With random data the model is, as measured by the median, wrong ~46% of the time and correct ~54% of the time.
+### With random data the median error of the model is ~46%.
 
 &nbsp; 
 
@@ -176,14 +179,13 @@ ggplot(aes(x=diff_abs, fill = Survived), data=Boat_random, stat_bin(25)) +
    xlab('Absolute Difference') + theme(legend.position="top")
 ```
 
+&nbsp; 
+
+### In order compare apples to apples, I ran the training data through the model again as well. 
 
 &nbsp; 
 
-### I also wanted to see what the this metric would look like for the real training data. 
-
-&nbsp; 
-
-With meaningful data the modeling was incorrect, as measured by the median, only ~11% of the time. This is a large reduction of error compared to model that predicted on random data. 
+With meaningful data the median error of the model is only ~11%. This is a large reduction of error compared to model that predicted on random data. This is a good sign that our model is picking up relevant patterns.
 
 ```{r comment=FALSE, results="hide"}
 #Predict on training data for comparison**********
@@ -239,6 +241,8 @@ The results show that the p-value is very small, meaning that we can with reason
 &nbsp; 
 
 ### What about confidence intervals? 
+
+&nbsp; 
 
 P-values are nice, but they are not especially useful on their own. Confidence intervals would be a big boost to my confidence in the differences.
 
@@ -304,16 +308,17 @@ rci <-boot.ci(results_random, type=c("norm"))
 rci$normal
 ```
 
+&nbsp; 
 
 ### Discussion
 
-I set out to try and apply some of the validation metrics used in statistics to machine learning.  The idea certainly not totally there, but I think this process is a good start to marrying two fundamental concepts between statistics and machine learning.
+I set out to try and apply some of the validation metrics used in statistics to machine learning.  The idea is certainly not totally there, but I think this process is a good start to marrying two fundamental concepts between statistics and machine learning.
 
 Some other ideas: 
 
 1. Instead of using an absolute error, this could be refined by doing the same process with a metric like LogLoss - which [has some interesting properties on it's own](https://emilyswebber.github.io/LogLoss/).
 
-2. Using non-parametric comparisons make sense if you don't know the distribution of the data, but what if you do?  Is there a pretest that can be applied to determine the distribution of the errors?
+2. Using non-parametric comparisons make sense if you don't know the distribution of the data, but what if you do?  
 
 3. Maybe running one random permutation isn't enough, are there concepts that can be borrowed from Montecarlo simulations?  Or is this just extra work without any benefit?
 
