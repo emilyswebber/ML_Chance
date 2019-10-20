@@ -30,7 +30,7 @@ In hypothesis testing, scientists use p-values and confidence intervals to make 
 
 In machine learning, data scientists generally look at out-of-sample validation to determine the fitness of a model.  But can we test specifically if the model is picking up relationships that are really there, or are only there by chance?
 
-I think this would be valuable in situations where you have very wide datasets with many columns and few samples, or if you are modeling on small datasets generally.     
+I think this would be valuable in situations where you have very wide datasets with many columns and few samples, or if you are modeling on small datasets generally, for example if you don't have enough data for a test set.
 
 
 I used the titanic dataset on kaggle to explore this idea. 
@@ -238,7 +238,7 @@ res
 
 &nbsp; 
 
-The results show that the p-value is very small (`r res$p.value`), meaning that we can with reasonable credibility assert that the reduction in error that we see with our XBGTree model predicting on real vs. random data is likely not due to chance.
+The results show that the p-value is very small (`r format(round(res$p.value, 20), nsmall = 20)`), meaning that we can with reasonable credibility assert that the reduction in error that we see with our XBGTree model predicting on real vs. random data is likely not due to chance.
 
 &nbsp; 
 
@@ -284,8 +284,10 @@ plot(results_training)
 ```{r comment=FALSE}
 # get 95% confidence interval 
 tci <- boot.ci(results_training, type=c("norm"))
-tci$normal
+
 ```
+
+confidence interval is: `r percent(tci$normal)` 
 
 &nbsp; 
 
@@ -307,8 +309,12 @@ plot(results_random)
 ```{r comment=FALSE}
 # get 95% confidence interval 
 rci <-boot.ci(results_random, type=c("norm"))
-rci$normal
+
 ```
+
+&nbsp; 
+
+confidence interval is: `r percent(rci$normal)` 
 
 &nbsp; 
 
@@ -414,6 +420,60 @@ Whole datset confidence interval is: `r percent(rci$normal)`
 
 &nbsp; 
 
+### Summary
+
+1. I created an XGBTree model with the caret package on the Titanic dataset with about ~83% accuracy. 
+
+2. When I ran a randomized dataset through the model the accuracy dropped by quite a lot to ~53%.
+
+3. I calculated the differences between the predicted and actual values simply by subtracting the probability of surival by the class (0 or 1) and taking the absolute value.   I then calculated the medians. 
+
+The median errors for the random data: `r percent(median(Boat_random$diff_abs))`
+
+The median errors for the non-random data: `r percent(median(boat_training_exp$diff_abs))`
+
+4. Then I plotted the distributions of these errors for the random and non-random samples.
+
+5.  I then wanted to see if the differences were *due to chance*, so I rand those error's through a Wilcoxon sign ranked test - which is a way to compare to non-normal distributions.  This test determined that these error distributions are significantly different: p-value: `r format(round(res$p.value, 20), nsmall = 20)`.
+
+6. After finding the p-vlaue I used a non-parametric bootstrapping method to calculate confidence intervals.
+
+The confidence intervals in the non-random data (`r percent(tci$normal)`) are lower than the random data (`r percent(rci$normal)`), further supporting that these two distributon of errors do not have much overlap.
+
+7. The final thing I wanted to test was whether or not this method would be impacted by sample size.  Confidence in findings should theoretically decrease when I use smaller samples, so I took a random sample of 10% of the original dat and recalculated these metrics. 
+
+**P-values**
+
+Whole datset p-value is: `r format(round(res$p.value, 20), nsmall = 20)` 
+
+&nbsp; 
+
+10% datset p-value is: `r res_2$p.value` 
+
+
+&nbsp; 
+
+**Confidence Intervals: non-random**
+
+Whole datset confidence interval for the non-random data is: `r percent(tci$normal)` 
+
+&nbsp; 
+
+10% datset confidence interval for the non-random data is is: `r percent(tci2$normal)` 
+
+&nbsp; 
+
+**Confidence Intervals: random**
+
+Whole datset confidence interval for the random dataset is: `r percent(rci$normal)` 
+
+&nbsp;
+
+10% datset confidence interval for the random dataset is: `r percent(rci2$normal)` 
+
+&nbsp; 
+
+
 ### Discussion
 
 I set out to try and apply some of the validation metrics used in statistics to machine learning.  The idea is certainly not totally there, but I think this process is a good start to marrying two fundamental concepts between statistics and machine learning.  
@@ -427,6 +487,8 @@ Some other ideas:
 2. Using non-parametric comparisons make sense if you don't know the distribution of the data, but what if you do?  
 
 3. Maybe running one random permutation isn't enough, are there concepts that can be borrowed from Montecarlo simulations?  Or is this just extra work without any benefit?
+
+4. I ran a random sample as well as the training sample through the dataset, but I did not use the test sample (mostly because the results are not publically available).  
 
 
 <!--html_preserve-->
